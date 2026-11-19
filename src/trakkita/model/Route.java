@@ -32,6 +32,9 @@ public class Route {
         if (name == null || name.trim().isEmpty()) {
             throw new InvalidInputException("Route name is required.");
         }
+        if (name.indexOf('\n') >= 0 || name.indexOf('\r') >= 0) {
+            throw new InvalidInputException("Route name must fit on one line.");
+        }
         this.name = name.trim();
     }
     public void setDistanceKm(double v) { this.distanceKm = Validator.requirePositive(v, "Distance"); }

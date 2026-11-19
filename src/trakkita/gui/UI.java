@@ -11,10 +11,12 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
@@ -171,5 +173,20 @@ public final class UI {
     /** Used by screens that need a JTextField type for a filter box. */
     public static JTextField searchField(int cols) {
         return new ThemedField(cols);
+    }
+
+    /** Makes Enter in any form field submit the form. */
+    public static void bindEnter(Runnable submit, JTextField... fields) {
+        for (JTextField field : fields) field.addActionListener(e -> submit.run());
+    }
+
+    /** Makes Escape clear a form while focus is anywhere inside its component tree. */
+    public static void bindEscape(JComponent root, Runnable clear) {
+        String action = "clear-form";
+        root.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                .put(KeyStroke.getKeyStroke("ESCAPE"), action);
+        root.getActionMap().put(action, new javax.swing.AbstractAction() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent e) { clear.run(); }
+        });
     }
 }

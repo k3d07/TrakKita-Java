@@ -32,6 +32,7 @@ public class AppShell extends JPanel {
         screens.put("Profit / Loss", new ProfitPanel(ctx));
         screens.put("Fuel Log", new FuelPanel(ctx));
         screens.put("Routes", new RoutePanel(ctx));
+        screens.put("Manage Routes", new RouteManagerPanel(ctx));
         screens.put("Break-Even", new BreakEvenPanel(ctx));
         screens.put("Quick-Tap", new QuickTapPanel(ctx));
         for (Map.Entry<String, ScreenPanel> e : screens.entrySet()) {

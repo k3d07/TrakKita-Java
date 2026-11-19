@@ -3,6 +3,7 @@ package trakkita.gui;
 import java.awt.BorderLayout;
 import java.util.List;
 import javax.swing.JComboBox;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -23,6 +24,7 @@ public class RoutePanel extends ScreenPanel {
     private final JComboBox<PUV> vehicle = new JComboBox<>(PUVCatalog.all().toArray(new PUV[0]));
     private final JTextField diesel = UI.field(7);
     private final JTextField boundary = UI.field(7);
+    private final JCheckBox ownerOperator = new JCheckBox("I own this vehicle (no boundary fee)");
     private final JLabel best = new JLabel(" ");
     private final DefaultTableModel model = UI.model("Rank", "Route", "Fuel cost", "Gross", "Net income", "Score");
     private final JTable table = UI.table(model);
@@ -33,11 +35,14 @@ public class RoutePanel extends ScreenPanel {
         vehicle.setPreferredSize(new java.awt.Dimension(vehicle.getPreferredSize().width + 20, 40));
         diesel.setText(String.valueOf(ctx.getDieselPrice()));
         boundary.setText(String.valueOf(ctx.getBoundaryFee()));
+        ownerOperator.setOpaque(false);
+        ownerOperator.setSelected(ctx.isOwnerOperator());
         ThemedButton rank = UI.button("Rank routes", true);
+        ThemedButton manage = UI.button("Manage routes", Theme.CREAM, Theme.INK);
 
         CardPanel form = UI.card();
         UI.stack(form, 0, UI.row(UI.labeled("Vehicle type", vehicle), UI.labeled("Diesel price (PHP/L)", diesel),
-                UI.labeled("Boundary fee (PHP)", boundary), rank));
+                UI.labeled("Boundary fee (PHP)", boundary), ownerOperator, rank, manage));
 
         best.setFont(Theme.mono(15, true));
         best.setForeground(Theme.TEAL);
@@ -48,15 +53,24 @@ public class RoutePanel extends ScreenPanel {
         north.add(best, BorderLayout.SOUTH);
         add(north, BorderLayout.NORTH);
         add(UI.tableCard(table), BorderLayout.CENTER);
+        TableStyle.rightAlignColumns(table, 0, 2, 3, 4, 5);
 
         // choosing a vehicle fills in that vehicle's default boundary fee (polymorphic call)
         vehicle.addActionListener(e -> {
             PUV p = (PUV) vehicle.getSelectedItem();
             if (p != null) {
-                boundary.setText(String.valueOf(p.getDefaultBoundaryFee()));
+                ctx.setVehicle(p);
+                boundary.setText(String.valueOf(ctx.getBoundaryFee()));
             }
         });
+        ownerOperator.addActionListener(e -> {
+            ctx.setOwnerOperator(ownerOperator.isSelected());
+            boundary.setEnabled(!ownerOperator.isSelected());
+            boundary.setText(String.valueOf(ctx.getBoundaryFee()));
+        });
         rank.addActionListener(e -> onRank());
+        manage.addActionListener(e -> goTo("Manage Routes"));
+        UI.bindEnter(this::onRank, diesel, boundary);
     }
 
     private void onRank() {
@@ -64,7 +78,7 @@ public class RoutePanel extends ScreenPanel {
             PUV p = (PUV) vehicle.getSelectedItem();
             double d = Validator.parseNumber(diesel.getText(), "Diesel price");
             double b = Validator.parseNumber(boundary.getText(), "Boundary fee");
-            ctx.setRouteSettings(p, d, b);
+            ctx.setRouteSettings(p, d, b, ownerOperator.isSelected());
             refresh();
         } catch (InvalidInputException ex) {
             UI.error(this, ex.getMessage());
@@ -73,6 +87,17 @@ public class RoutePanel extends ScreenPanel {
 
     @Override
     public void refresh() {
+        PUV selected = ctx.getVehicle();
+        for (int i = 0; i < vehicle.getItemCount(); i++) {
+            if (vehicle.getItemAt(i).getClass().equals(selected.getClass())) {
+                vehicle.setSelectedIndex(i);
+                break;
+            }
+        }
+        diesel.setText(String.valueOf(ctx.getDieselPrice()));
+        boundary.setText(String.valueOf(ctx.getBoundaryFee()));
+        ownerOperator.setSelected(ctx.isOwnerOperator());
+        boundary.setEnabled(!ctx.isOwnerOperator());
         model.setRowCount(0);
         List<RouteResult> ranked = ctx.recommender().rank(ctx.getVehicle(), ctx.getDieselPrice(), ctx.getBoundaryFee());
         int rank = 1;

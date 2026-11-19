@@ -2,6 +2,7 @@ package trakkita.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +25,7 @@ public class FuelPanel extends ScreenPanel {
     private final JTextField date = UI.field(9);
     private final JTextField liters = UI.field(7);
     private final JTextField price = UI.field(8);
+    private final JTextField search = UI.field(9);
     private final JLabel summary = new JLabel(" ");
     private final DefaultTableModel model = UI.model("Date", "Liters", "Price per liter", "Total cost");
     private final JTable table = UI.table(model);
@@ -34,11 +36,14 @@ public class FuelPanel extends ScreenPanel {
         ThemedButton add = UI.button("Add", true);
         ThemedButton update = UI.button("Update", false);
         ThemedButton delete = UI.button("Delete", Theme.DARK_RED, Color.WHITE);
+        ThemedButton clear = UI.button("Clear", Theme.CREAM, Theme.INK);
+        update.setEnabled(false);
+        delete.setEnabled(false);
         CardPanel form = UI.card();
         UI.stack(form, 12,
                 UI.row(UI.labeled("Date (yyyy-MM-dd)", date), UI.labeled("Liters", liters),
                         UI.labeled("Price per liter (PHP)", price)),
-                UI.row(add, update, delete));
+                UI.row(add, update, delete, clear));
 
         CardPanel summaryCard = UI.ticket("7-entry summary", Theme.TEAL, Color.WHITE);
         summaryCard.setLayout(new BorderLayout());
@@ -51,13 +56,29 @@ public class FuelPanel extends ScreenPanel {
         north.add(header("Fuel Log", "Log each fill-up. The summary covers your latest 7 entries."), BorderLayout.NORTH);
         north.add(form, BorderLayout.CENTER);
         add(north, BorderLayout.NORTH);
-        add(UI.tableCard(table), BorderLayout.CENTER);
+        JPanel history = new JPanel(new BorderLayout(0, 8));
+        history.setOpaque(false);
+        JPanel historyBar = new JPanel(new BorderLayout());
+        historyBar.setOpaque(false);
+        JLabel historyTitle = UI.muted("History");
+        JPanel filter = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        filter.setOpaque(false);
+        filter.add(UI.labeled("Search by date", search));
+        historyBar.add(historyTitle, BorderLayout.WEST);
+        historyBar.add(filter, BorderLayout.EAST);
+        history.add(historyBar, BorderLayout.NORTH);
+        history.add(UI.tableCard(table), BorderLayout.CENTER);
+        add(history, BorderLayout.CENTER);
+        TableStyle.padLeftColumn(table, 0);
+        TableStyle.rightAlignColumns(table, 1, 2, 3);
         add(summaryCard, BorderLayout.SOUTH);
 
         date.setText(LocalDate.now().toString());
         add.addActionListener(e -> onAdd());
         update.addActionListener(e -> onUpdate());
         delete.addActionListener(e -> onDelete());
+        clear.addActionListener(e -> clearForm());
+        search.getDocument().addDocumentListener(UI.onChange(this::refresh));
         table.getSelectionModel().addListSelectionListener(e -> {
             int r = table.getSelectedRow();
             if (!e.getValueIsAdjusting() && r >= 0 && r < shown.size()) {
@@ -66,7 +87,12 @@ public class FuelPanel extends ScreenPanel {
                 liters.setText(String.valueOf(f.getLiters()));
                 price.setText(String.valueOf(f.getPricePerLiter()));
             }
+            boolean selected = table.getSelectedRow() >= 0;
+            update.setEnabled(selected);
+            delete.setEnabled(selected);
         });
+        UI.bindEnter(this::onAdd, date, liters, price);
+        UI.bindEscape(this, this::clearForm);
     }
 
     private FuelEntry readForm() {
@@ -119,9 +145,17 @@ public class FuelPanel extends ScreenPanel {
         }
     }
 
+    private void clearForm() {
+        date.setText(LocalDate.now().toString());
+        liters.setText("");
+        price.setText("");
+        table.clearSelection();
+    }
+
     @Override
     public void refresh() {
-        shown = ctx.fuel().getAll();
+        String q = search.getText().trim();
+        shown = ctx.fuel().filter(f -> q.isEmpty() || f.getDate().toString().contains(q));
         Collections.reverse(shown);
         model.setRowCount(0);
         for (FuelEntry f : shown) {

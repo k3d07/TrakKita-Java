@@ -100,7 +100,7 @@ public class BreakEvenPanel extends ScreenPanel {
         center.add(receipt);
         add(center, BorderLayout.CENTER);
 
-        fuelPrice.setText("60.0");
+        fuelPrice.setText(String.valueOf(ctx.getDieselPrice()));
         distance.setText("120");
         trips.setText("10");
         wages.setText("0");
@@ -108,8 +108,14 @@ public class BreakEvenPanel extends ScreenPanel {
         fare.setText("13.0");
         pax.setText("12");
         applyDefaults();
-        vehicle.addActionListener(e -> applyDefaults());
+        vehicle.addActionListener(e -> {
+            PUV p = (PUV) vehicle.getSelectedItem();
+            if (p != null) ctx.setVehicle(p);
+            applyDefaults();
+        });
         simulate.addActionListener(e -> onSimulate());
+        UI.bindEnter(this::onSimulate, fuelPrice, efficiency, distance, trips, boundary, maintenance,
+                wages, other, fare, pax);
         onSimulate();
     }
 
@@ -120,7 +126,7 @@ public class BreakEvenPanel extends ScreenPanel {
             return;
         }
         efficiency.setText(String.valueOf(p.getFuelEfficiencyKmPerL()));
-        boundary.setText(String.valueOf(p.getDefaultBoundaryFee()));
+        boundary.setText(String.valueOf(ctx.getBoundaryFee()));
         maintenance.setText(String.valueOf(p.getDefaultMaintenance()));
     }
 
@@ -161,6 +167,12 @@ public class BreakEvenPanel extends ScreenPanel {
 
     @Override
     public void refresh() {
-        // inputs stay as the user left them; nothing to reload
+        PUV selected = ctx.getVehicle();
+        for (int i = 0; i < vehicle.getItemCount(); i++) {
+            if (vehicle.getItemAt(i).getClass().equals(selected.getClass())) {
+                if (vehicle.getSelectedIndex() != i) vehicle.setSelectedIndex(i);
+                break;
+            }
+        }
     }
 }

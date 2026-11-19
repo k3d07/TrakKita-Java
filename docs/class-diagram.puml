@@ -1,0 +1,112 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+package trakkita.model {
+  interface Persistable
+  interface Reportable
+  abstract class LogEntry
+  class DailyEarning
+  class FuelEntry
+  class TapSession
+  abstract class PUV
+  class TraditionalJeepney
+  class ModernJeepney
+  class UVExpress
+  class ProvincialBus
+  class Tricycle
+  class Route
+}
+
+package trakkita.exception {
+  class InvalidInputException
+  class InvalidFareException
+  class DataCorruptedException
+}
+
+package trakkita.storage {
+  interface DataStore
+  class CsvDataStore
+  class LoadResult
+}
+
+package trakkita.service {
+  class AppContext
+  class "EntryRepository<T extends LogEntry>" as EntryRepository
+  class FuelLogService
+  class RouteRecommender
+  class RouteCsvLoader
+  class RouteResult
+  class PUVCatalog
+  class BreakEvenCalculator
+  class BreakEvenInput
+  class BreakEvenResult
+}
+
+package trakkita.gui {
+  class MainFrame
+  class AppShell
+  abstract class ScreenPanel
+  class DashboardPanel
+  class ProfitPanel
+  class FuelPanel
+  class RoutePanel
+  class RouteManagerPanel
+  class BreakEvenPanel
+  class QuickTapPanel
+  class UI
+  class TableStyle
+  class StatusLine
+}
+
+LogEntry <|-- DailyEarning
+LogEntry <|-- FuelEntry
+LogEntry <|-- TapSession
+LogEntry ..|> Persistable
+LogEntry ..|> Reportable
+PUV <|-- TraditionalJeepney
+PUV <|-- ModernJeepney
+PUV <|-- UVExpress
+PUV <|-- ProvincialBus
+PUV <|-- Tricycle
+CsvDataStore ..|> DataStore
+
+AppContext *-- EntryRepository : earnings
+AppContext *-- EntryRepository : fuel
+AppContext *-- EntryRepository : sessions
+AppContext *-- FuelLogService
+AppContext *-- RouteRecommender
+AppContext *-- BreakEvenCalculator
+AppContext --> DataStore
+CsvDataStore ..> LoadResult
+EntryRepository o-- LogEntry
+FuelLogService --> EntryRepository
+RouteRecommender o-- Route
+RouteRecommender ..> RouteCsvLoader
+RouteRecommender ..> RouteResult
+RouteResult --> Route
+PUVCatalog ..> PUV
+BreakEvenCalculator ..> BreakEvenInput
+BreakEvenCalculator ..> BreakEvenResult
+
+ScreenPanel <|-- DashboardPanel
+ScreenPanel <|-- ProfitPanel
+ScreenPanel <|-- FuelPanel
+ScreenPanel <|-- RoutePanel
+ScreenPanel <|-- RouteManagerPanel
+ScreenPanel <|-- BreakEvenPanel
+ScreenPanel <|-- QuickTapPanel
+MainFrame *-- AppShell
+AppShell o-- ScreenPanel
+ScreenPanel --> AppContext
+ScreenPanel *-- StatusLine
+ProfitPanel ..> TableStyle
+FuelPanel ..> TableStyle
+RoutePanel ..> TableStyle
+RouteManagerPanel ..> TableStyle
+QuickTapPanel ..> TableStyle
+
+note right of RouteCsvLoader
+Static utility that reads/writes routes.csv.
+end note
+@enduml

@@ -17,6 +17,7 @@ public abstract class ScreenPanel extends JPanel {
     private static final long ENTRANCE_MS = 450;
 
     protected final AppContext ctx;
+    protected final StatusLine statusLine = new StatusLine();
     private Consumer<String> navigator = name -> { };
     private long enteredAt = -100000;
 
@@ -48,8 +49,10 @@ public abstract class ScreenPanel extends JPanel {
     protected void persist() {
         try {
             ctx.save();
+            statusLine.showMessage("Saved to data/puv_records.csv.");
         } catch (IOException e) {
             UI.error(this, "Your change is on screen but could not be saved to the file: " + e.getMessage());
+            statusLine.showMessage("Could not save the change.", true);
         }
     }
 
@@ -58,6 +61,7 @@ public abstract class ScreenPanel extends JPanel {
         p.setOpaque(false);
         p.add(UI.title(titleText), BorderLayout.NORTH);
         p.add(UI.sub(subtitleText), BorderLayout.CENTER);
+        p.add(statusLine, BorderLayout.SOUTH);
         return p;
     }
 

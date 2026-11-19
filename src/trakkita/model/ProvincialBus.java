@@ -1,6 +1,6 @@
 package trakkita.model;
 
-/** NOTE: default numbers are placeholders. Replace with the values from your C version. */
+/** Additional Java preset; its assumptions are not defined by the original C route recommender. */
 public class ProvincialBus extends PUV {
     public ProvincialBus() { super("Provincial Bus"); }
 

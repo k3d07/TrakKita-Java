@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.time.LocalDate;
 import trakkita.exception.DataCorruptedException;
 import trakkita.model.DailyEarning;
 import trakkita.model.FuelEntry;
@@ -29,11 +30,56 @@ public class AppContext {
     private final List<String> startupWarnings = new ArrayList<>();
 
     private PUV vehicle = new TraditionalJeepney();
-    private double dieselPrice = 60.0;   // placeholder default
+    private double dieselPrice = 65.0;
     private double boundaryFee = vehicle.getDefaultBoundaryFee();
+    private boolean ownerOperator;
 
     public AppContext(DataStore store) {
         this.store = store;
+        startupWarnings.addAll(recommender.getWarnings());
+    }
+
+    // ---- Part 2: shared state so screens don't talk to each other directly ----
+    private LocalDate pendingDate; // set by Quick-Tap, used once by Profit / Loss
+    private Double pendingFares;
+
+    public void setPendingEntry(LocalDate date, double fares) {
+        this.pendingDate = date;
+        this.pendingFares = fares;
+    }
+
+    public boolean hasPendingEntry() {
+        return pendingFares != null;
+    }
+
+    public LocalDate takePendingDate() {
+        LocalDate d = pendingDate;
+        pendingDate = null;
+        return d;
+    }
+
+    public double takePendingFares() {
+        double f = (pendingFares == null) ? 0 : pendingFares;
+        pendingFares = null;
+        return f;
+    }
+
+    /** Boundary fee of the most recent day (0 if there are no entries yet). */
+    public double lastBoundaryFee() {
+        List<DailyEarning> all = earnings().filter(e -> true);
+        return all.stream()
+                .max(Comparator.comparing(DailyEarning::getDate))
+                .map(DailyEarning::getBoundaryFee)
+                .orElse(0.0);
+    }
+
+    /** Total fuel cost logged on a date, from the Fuel Log. */
+    public double fuelCostForDate(LocalDate date) {
+        double total = 0;
+        for (FuelEntry f : fuel().filter(x -> date.equals(x.getDate()))) {
+            total += f.getLiters() * f.getPricePerLiter();
+        }
+        return total;
     }
 
     public void load() {
@@ -67,11 +113,23 @@ public class AppContext {
     public PUV getVehicle() { return vehicle; }
     public double getDieselPrice() { return dieselPrice; }
     public double getBoundaryFee() { return boundaryFee; }
+    public boolean isOwnerOperator() { return ownerOperator; }
 
-    public void setRouteSettings(PUV vehicle, double dieselPrice, double boundaryFee) {
+    public void setOwnerOperator(boolean ownerOperator) {
+        this.ownerOperator = ownerOperator;
+        this.boundaryFee = ownerOperator ? 0 : vehicle.getDefaultBoundaryFee();
+    }
+
+    public void setRouteSettings(PUV vehicle, double dieselPrice, double boundaryFee, boolean ownerOperator) {
         this.vehicle = vehicle;
         this.dieselPrice = Validator.requirePositive(dieselPrice, "Diesel price");
-        this.boundaryFee = Validator.requireNonNegative(boundaryFee, "Boundary fee");
+        this.ownerOperator = ownerOperator;
+        this.boundaryFee = ownerOperator ? 0 : Validator.requireNonNegative(boundaryFee, "Boundary fee");
+    }
+
+    public void setVehicle(PUV vehicle) {
+        this.vehicle = vehicle;
+        if (!ownerOperator) boundaryFee = vehicle.getDefaultBoundaryFee();
     }
 
     public String bestRouteToday() {

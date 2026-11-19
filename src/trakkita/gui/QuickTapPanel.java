@@ -9,10 +9,15 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.table.DefaultTableModel;
 import trakkita.gui.widget.BigTapButton;
 import trakkita.gui.widget.LedDisplay;
 import trakkita.gui.widget.RoadStrip;
@@ -24,6 +29,9 @@ import trakkita.util.Money;
 
 public class QuickTapPanel extends ScreenPanel {
     private TapSession current = new TapSession(LocalDate.now());
+    private final DefaultTableModel historyModel = UI.model("Date", "Discounted", "Regular", "Total");
+    private final JTable historyTable = UI.table(historyModel);
+    private List<TapSession> shownSessions = new ArrayList<>();
     private final LedDisplay total = new LedDisplay("Running total", 40);
     private final LedDisplay count = new LedDisplay("Passengers", 28);
     private final LedDisplay split = new LedDisplay("Disc. / Reg.", 28);
@@ -38,7 +46,19 @@ public class QuickTapPanel extends ScreenPanel {
         pad.setOpaque(false);
         pad.add(discounted);
         pad.add(regular);
-        add(pad, BorderLayout.CENTER);
+        JPanel main = new JPanel(new BorderLayout(0, 10));
+        main.setOpaque(false);
+        main.add(pad, BorderLayout.CENTER);
+        JPanel history = new JPanel(new BorderLayout(8, 6));
+        history.setOpaque(false);
+        history.add(UI.muted("Saved sessions"), BorderLayout.NORTH);
+        history.add(UI.tableCard(historyTable), BorderLayout.CENTER);
+        ThemedButton deleteSession = UI.button("Delete selected session", Theme.DARK_RED, Color.WHITE);
+        deleteSession.setEnabled(false);
+        history.add(deleteSession, BorderLayout.EAST);
+        history.setPreferredSize(new java.awt.Dimension(200, 155));
+        main.add(history, BorderLayout.SOUTH);
+        add(main, BorderLayout.CENTER);
 
         total.setColor(Theme.MINT);
         count.setColor(Theme.SIDE_TEXT);
@@ -83,10 +103,15 @@ public class QuickTapPanel extends ScreenPanel {
             update();
         });
         end.addActionListener(e -> endSession());
+        deleteSession.addActionListener(e -> deleteSession());
+        historyTable.getSelectionModel().addListSelectionListener(e ->
+                deleteSession.setEnabled(historyTable.getSelectedRow() >= 0));
         // keyboard taps click the on-screen button so it animates too
         bindKey(KeyEvent.VK_1, "tap-discounted", () -> discounted.doClick(90));
         bindKey(KeyEvent.VK_2, "tap-regular", () -> regular.doClick(90));
         update();
+        TableStyle.padLeftColumn(historyTable, 0);
+        TableStyle.rightAlignColumns(historyTable, 1, 2, 3);
     }
 
     private void bindKey(int keyCode, String name, Runnable action) {
@@ -115,16 +140,44 @@ public class QuickTapPanel extends ScreenPanel {
             UI.info(this, "There are no taps to save yet.");
             return;
         }
-        if (UI.confirm(this, "Save this session (" + Money.peso(current.getTotalCollected()) + ") and start a new one?")) {
+        double sessionTotal = current.getTotalCollected();
+        if (UI.confirm(this, "Save this session (" + Money.peso(sessionTotal) + ") and start a new one?")) {
             ctx.sessions().add(current);
             persist();
             current = new TapSession(LocalDate.now());
             update();
+            refresh();
+            if (UI.confirm(this, "Add " + Money.peso(sessionTotal) + " as today's fares in Profit / Loss?")) {
+                ctx.setPendingEntry(LocalDate.now(), sessionTotal);
+                goTo("Profit / Loss");
+            }
         }
     }
 
     @Override
     public void refresh() {
         update();
+        shownSessions = ctx.sessions().getAll();
+        Collections.reverse(shownSessions);
+        historyModel.setRowCount(0);
+        for (TapSession session : shownSessions) {
+            historyModel.addRow(new Object[] {session.getDate(), session.getDiscountedTaps(),
+                    session.getRegularTaps(), Money.peso(session.getTotalCollected())});
+        }
+    }
+
+    private void deleteSession() {
+        int row = historyTable.getSelectedRow();
+        if (row < 0) {
+            UI.info(this, "Select a saved session first.");
+            return;
+        }
+        int modelRow = historyTable.convertRowIndexToModel(row);
+        TapSession session = shownSessions.get(modelRow);
+        if (UI.confirm(this, "Delete the saved session from " + session.getDate() + "?")) {
+            ctx.sessions().remove(session);
+            persist();
+            refresh();
+        }
     }
 }

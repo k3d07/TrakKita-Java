@@ -3,6 +3,8 @@ package trakkita.gui.widget;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -39,6 +41,20 @@ public class StyledTable extends JTable {
                 return this;
             }
         });
+    }
+
+    @Override
+    protected void paintComponent(Graphics g0) {
+        super.paintComponent(g0);
+        if (getRowCount() != 0) return;
+        Graphics2D g = Theme.aa(g0);
+        String message = "No records to show";
+        g.setFont(Theme.body(15));
+        g.setColor(Theme.MUTED);
+        java.awt.FontMetrics fm = g.getFontMetrics();
+        g.drawString(message, Math.max(12, (getWidth() - fm.stringWidth(message)) / 2),
+                Math.max(fm.getAscent() + 8, getHeight() / 2));
+        g.dispose();
     }
 
     @Override
