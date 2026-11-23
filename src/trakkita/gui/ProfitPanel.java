@@ -161,6 +161,10 @@ public class ProfitPanel extends ScreenPanel {
                 persist();
                 clearForm();
                 refresh();
+                warning.setText(e.isLoss()
+                        ? "Loss warning: this day ended " + Money.peso(-e.getNetProfit()) + " below zero."
+                        : " ");
+                warning.setVisible(e.isLoss());
                 return;
             }
             ctx.earnings().add(e);
@@ -185,6 +189,12 @@ public class ProfitPanel extends ScreenPanel {
         try {
             DailyEarning checked = readForm(); // validate everything before changing anything
             DailyEarning target = shown.get(table.convertRowIndexToModel(row));
+            boolean duplicateDate = !checked.getDate().equals(target.getDate())
+                    && !ctx.earnings().filter(e -> e != target && checked.getDate().equals(e.getDate())).isEmpty();
+            if (duplicateDate) {
+                UI.error(this, "An entry for " + checked.getDate() + " already exists. Edit that one or pick another date.");
+                return;
+            }
             target.setDate(checked.getDate());
             target.setTotalFares(checked.getTotalFares());
             target.setFuelCost(checked.getFuelCost());
@@ -235,6 +245,7 @@ public class ProfitPanel extends ScreenPanel {
      */
     @Override
     public void onShown() {
+        super.onShown();
         if (!ctx.hasPendingEntry()) {
             return;
         }

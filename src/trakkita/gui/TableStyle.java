@@ -23,6 +23,13 @@ public final class TableStyle {
     private TableStyle() {
     }
 
+    /** Sets preferred widths by view-column order. */
+    public static void setColumnWidths(JTable table, int... widths) {
+        for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+    }
+
     /**
      * Right-aligns the given view columns. Call AFTER you set your own renderers
      * (for example the green/red Net Profit renderer), so this wraps them.

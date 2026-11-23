@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
@@ -46,17 +47,28 @@ public class QuickTapPanel extends ScreenPanel {
         pad.setOpaque(false);
         pad.add(discounted);
         pad.add(regular);
-        JPanel main = new JPanel(new BorderLayout(0, 10));
-        main.setOpaque(false);
-        main.add(pad, BorderLayout.CENTER);
         JPanel history = new JPanel(new BorderLayout(8, 6));
         history.setOpaque(false);
         history.add(UI.muted("Saved sessions"), BorderLayout.NORTH);
         history.add(UI.tableCard(historyTable), BorderLayout.CENTER);
         ThemedButton deleteSession = UI.button("Delete selected session", Theme.DARK_RED, Color.WHITE);
         deleteSession.setEnabled(false);
-        history.add(deleteSession, BorderLayout.EAST);
-        history.setPreferredSize(new java.awt.Dimension(200, 155));
+        JPanel deleteBox = new JPanel(new BorderLayout());
+        deleteBox.setOpaque(false);
+        deleteBox.add(deleteSession, BorderLayout.NORTH);
+        history.add(deleteBox, BorderLayout.EAST);
+        history.setPreferredSize(new java.awt.Dimension(200, 190));
+        JPanel main = new JPanel(new BorderLayout(0, 10)) {
+            @Override public void doLayout() {
+                int historyHeight = getHeight() < 360 ? 168 : 190;
+                if (history.getPreferredSize().height != historyHeight) {
+                    history.setPreferredSize(new java.awt.Dimension(200, historyHeight));
+                }
+                super.doLayout();
+            }
+        };
+        main.setOpaque(false);
+        main.add(pad, BorderLayout.CENTER);
         main.add(history, BorderLayout.SOUTH);
         add(main, BorderLayout.CENTER);
 
@@ -141,16 +153,21 @@ public class QuickTapPanel extends ScreenPanel {
             return;
         }
         double sessionTotal = current.getTotalCollected();
-        if (UI.confirm(this, "Save this session (" + Money.peso(sessionTotal) + ") and start a new one?")) {
-            ctx.sessions().add(current);
-            persist();
-            current = new TapSession(LocalDate.now());
-            update();
-            refresh();
-            if (UI.confirm(this, "Add " + Money.peso(sessionTotal) + " as today's fares in Profit / Loss?")) {
-                ctx.setPendingEntry(LocalDate.now(), sessionTotal);
-                goTo("Profit / Loss");
-            }
+        String[] options = {"Save and add to Profit / Loss", "Save only", "Cancel"};
+        int choice = JOptionPane.showOptionDialog(this,
+                "Save this session (" + Money.peso(sessionTotal) + ")?", "End Quick-Tap session",
+                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+        if (choice != 0 && choice != 1) return;
+
+        LocalDate sessionDate = current.getDate();
+        ctx.sessions().add(current);
+        persist();
+        current = new TapSession(LocalDate.now());
+        update();
+        refresh();
+        if (choice == 0) {
+            ctx.setPendingEntry(sessionDate, sessionTotal);
+            goTo("Profit / Loss");
         }
     }
 

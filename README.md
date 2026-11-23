@@ -19,17 +19,27 @@ TrakKita is an offline desktop tracker for public utility vehicle (PUV) drivers.
 |---|---|---|
 | ![Dashboard](docs/screenshots/Dashboard.png) | ![Profit and Loss](docs/screenshots/ProfitLoss.png) | ![Fuel Log](docs/screenshots/FuelLog.png) |
 
-| Routes | Break-Even | Quick-Tap |
+| Routes | Manage Routes | Break-Even |
 |---|---|---|
-| ![Routes](docs/screenshots/Routes.png) | ![Break-Even](docs/screenshots/BreakEven.png) | ![Quick-Tap](docs/screenshots/QuickTap.png) |
+| ![Routes](docs/screenshots/Routes.png) | ![Manage Routes](docs/screenshots/ManageRoutes.png) | ![Break-Even](docs/screenshots/BreakEven.png) |
+
+| Quick-Tap |
+|---|
+| ![Quick-Tap](docs/screenshots/QuickTap.png) |
 
 ## Requirements and launch
 
-- Windows with JDK 17 or newer.
-- Run `build.bat`, then `run.bat`, from the `TrakKita-Java` project folder.
-- Keep the working directory at the project folder so the app can load `fonts/` and use `data/`.
+Use JDK 17 or newer. Run all commands from the `TrakKita-Java` project folder so the app can load `fonts/` and use `data/`.
 
-`build.bat` compiles every Java source file into `out/` with UTF-8 encoding. `run.bat` launches `trakkita.Main` from that output folder.
+On Windows, run `build.bat`, then `run.bat`. The build script compiles every Java source file into `out/` with UTF-8 encoding.
+
+On Linux, macOS, or Git Bash:
+
+```bash
+mkdir -p out
+javac -encoding UTF-8 -d out $(find src -name '*.java')
+java -cp out trakkita.Main
+```
 
 ## Data files
 
@@ -41,13 +51,19 @@ FUEL,date,liters,pricePerLiter
 TAP,date,discountedTaps,regularTaps
 ```
 
-Malformed record lines are skipped with a startup warning. `data/routes.csv` uses:
+Non-finite numeric values such as `NaN` and `Infinity` are rejected. Malformed record lines are skipped with a startup warning. For daily earnings, the first record for a date is kept; later duplicate `EARNING` rows are skipped with a warning. In the UI, Add can replace an existing date after confirmation, while Update rejects a date already used by another entry. Fuel and Quick-Tap records may repeat on the same date. `data/routes.csv` uses:
 
 ```text
 id,name,distanceKm,trafficFactor,avgFarePerTrip,tripsPerDay
 ```
 
 The route manager writes this file when the user saves a route change. The app uses the built-in route list if the file is missing or every row is invalid.
+
+## Known limitations
+
+- There are five vehicle types. Provincial Bus uses Java-only placeholder assumptions; the original C route recommender does not define its values.
+- Vehicle selection and route settings are not saved between launches.
+- Vehicle capacity is stored on each PUV type but is not used in calculations.
 
 The four vehicle fuel-consumption values and route seeds are taken from the original C route recommender. The Java project also contains Provincial Bus as an additional Java-only preset; the C source does not define matching bus assumptions. Vehicle capacity and maintenance values are not inputs to route ranking.
 

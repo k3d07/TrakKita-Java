@@ -44,8 +44,11 @@ public class AppContext {
     private Double pendingFares;
 
     public void setPendingEntry(LocalDate date, double fares) {
+        if (date == null) {
+            throw new IllegalArgumentException("Pending entry date is required.");
+        }
         this.pendingDate = date;
-        this.pendingFares = fares;
+        this.pendingFares = Validator.requireNonNegative(fares, "Fares");
     }
 
     public boolean hasPendingEntry() {
@@ -85,7 +88,13 @@ public class AppContext {
     public void load() {
         try {
             LoadResult r = store.load();
-            r.getEarnings().forEach(earnings::add);
+            for (DailyEarning earning : r.getEarnings()) {
+                if (earnings.findByDate(earning.getDate()).isPresent()) {
+                    startupWarnings.add("Duplicate EARNING for " + earning.getDate() + " skipped.");
+                } else {
+                    earnings.add(earning);
+                }
+            }
             r.getFuel().forEach(fuel::add);
             r.getSessions().forEach(sessions::add);
             startupWarnings.addAll(r.getWarnings());

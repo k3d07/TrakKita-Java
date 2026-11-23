@@ -52,6 +52,7 @@ public class RouteManagerPanel extends ScreenPanel {
         add(UI.tableCard(table), BorderLayout.CENTER);
         TableStyle.padLeftColumn(table, 1);
         TableStyle.rightAlignColumns(table, 0, 2, 3, 4, 5);
+        TableStyle.setColumnWidths(table, 50, 330, 110, 90, 110, 90);
 
         add.addActionListener(e -> onAdd());
         update.addActionListener(e -> onUpdate());

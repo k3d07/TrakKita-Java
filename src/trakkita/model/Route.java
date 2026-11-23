@@ -13,6 +13,9 @@ public class Route {
 
     public Route(int id, String name, double distanceKm, double trafficFactor,
                  double avgFarePerTrip, int tripsPerDay) {
+        if (id <= 0) {
+            throw new InvalidInputException("Route ID must be a positive whole number.");
+        }
         this.id = id;
         setName(name);
         setDistanceKm(distanceKm);

@@ -31,7 +31,7 @@ public class BreakEvenInput {
         this.maintenance = Validator.requireNonNegative(maintenance, "Maintenance");
         this.driverWages = Validator.requireNonNegative(driverWages, "Driver wages");
         this.otherCosts = Validator.requireNonNegative(otherCosts, "Other costs");
-        if (farePerPax <= 0) {
+        if (!Double.isFinite(farePerPax) || farePerPax <= 0) {
             throw new InvalidFareException("Fare per passenger must be greater than zero.");
         }
         this.farePerPax = farePerPax;

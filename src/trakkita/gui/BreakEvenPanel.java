@@ -100,7 +100,7 @@ public class BreakEvenPanel extends ScreenPanel {
         center.add(receipt);
         add(center, BorderLayout.CENTER);
 
-        fuelPrice.setText(String.valueOf(ctx.getDieselPrice()));
+        fuelPrice.setText(plain(ctx.getDieselPrice()));
         distance.setText("120");
         trips.setText("10");
         wages.setText("0");
@@ -125,9 +125,14 @@ public class BreakEvenPanel extends ScreenPanel {
         if (p == null) {
             return;
         }
-        efficiency.setText(String.valueOf(p.getFuelEfficiencyKmPerL()));
-        boundary.setText(String.valueOf(ctx.getBoundaryFee()));
-        maintenance.setText(String.valueOf(p.getDefaultMaintenance()));
+        efficiency.setText(plain(p.getFuelEfficiencyKmPerL()));
+        boundary.setText(plain(ctx.getBoundaryFee()));
+        maintenance.setText(plain(p.getDefaultMaintenance()));
+    }
+
+    private static String plain(double value) {
+        return new java.math.BigDecimal(value).setScale(4, java.math.RoundingMode.HALF_UP)
+                .stripTrailingZeros().toPlainString();
     }
 
     private void onSimulate() {

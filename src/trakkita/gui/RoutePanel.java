@@ -33,9 +33,11 @@ public class RoutePanel extends ScreenPanel {
         super(ctx);
         vehicle.setFont(Theme.mono(14, false));
         vehicle.setPreferredSize(new java.awt.Dimension(vehicle.getPreferredSize().width + 20, 40));
-        diesel.setText(String.valueOf(ctx.getDieselPrice()));
-        boundary.setText(String.valueOf(ctx.getBoundaryFee()));
+        diesel.setText(plain(ctx.getDieselPrice()));
+        boundary.setText(plain(ctx.getBoundaryFee()));
         ownerOperator.setOpaque(false);
+        ownerOperator.setFont(Theme.body(14));
+        ownerOperator.setForeground(Theme.INK);
         ownerOperator.setSelected(ctx.isOwnerOperator());
         ThemedButton rank = UI.button("Rank routes", true);
         ThemedButton manage = UI.button("Manage routes", Theme.CREAM, Theme.INK);
@@ -54,19 +56,20 @@ public class RoutePanel extends ScreenPanel {
         add(north, BorderLayout.NORTH);
         add(UI.tableCard(table), BorderLayout.CENTER);
         TableStyle.rightAlignColumns(table, 0, 2, 3, 4, 5);
+        TableStyle.setColumnWidths(table, 60, 330, 120, 120, 120, 80);
 
         // choosing a vehicle fills in that vehicle's default boundary fee (polymorphic call)
         vehicle.addActionListener(e -> {
             PUV p = (PUV) vehicle.getSelectedItem();
             if (p != null) {
                 ctx.setVehicle(p);
-                boundary.setText(String.valueOf(ctx.getBoundaryFee()));
+                boundary.setText(plain(ctx.getBoundaryFee()));
             }
         });
         ownerOperator.addActionListener(e -> {
             ctx.setOwnerOperator(ownerOperator.isSelected());
             boundary.setEnabled(!ownerOperator.isSelected());
-            boundary.setText(String.valueOf(ctx.getBoundaryFee()));
+            boundary.setText(plain(ctx.getBoundaryFee()));
         });
         rank.addActionListener(e -> onRank());
         manage.addActionListener(e -> goTo("Manage Routes"));
@@ -94,8 +97,8 @@ public class RoutePanel extends ScreenPanel {
                 break;
             }
         }
-        diesel.setText(String.valueOf(ctx.getDieselPrice()));
-        boundary.setText(String.valueOf(ctx.getBoundaryFee()));
+        diesel.setText(plain(ctx.getDieselPrice()));
+        boundary.setText(plain(ctx.getBoundaryFee()));
         ownerOperator.setSelected(ctx.isOwnerOperator());
         boundary.setEnabled(!ctx.isOwnerOperator());
         model.setRowCount(0);
@@ -107,5 +110,10 @@ public class RoutePanel extends ScreenPanel {
         }
         best.setText("Recommended today: " + ranked.get(0).getRoute().getName());
         table.setRowSelectionInterval(0, 0);
+    }
+
+    private static String plain(double value) {
+        return new java.math.BigDecimal(value).setScale(4, java.math.RoundingMode.HALF_UP)
+                .stripTrailingZeros().toPlainString();
     }
 }

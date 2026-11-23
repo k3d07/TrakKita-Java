@@ -25,7 +25,7 @@ public final class Validator {
 
     public static int parseWhole(String text, String field) {
         double v = parseNumber(text, field);
-        if (v != Math.floor(v)) {
+        if (v != Math.floor(v) || v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
             throw new InvalidInputException(field + " must be a whole number.");
         }
         return (int) v;
@@ -43,6 +43,9 @@ public final class Validator {
     }
 
     public static double requireNonNegative(double v, String field) {
+        if (!Double.isFinite(v)) {
+            throw new InvalidInputException(field + " must be a valid number.");
+        }
         if (v < 0) {
             throw new InvalidInputException(field + " cannot be negative.");
         }
@@ -50,6 +53,9 @@ public final class Validator {
     }
 
     public static double requirePositive(double v, String field) {
+        if (!Double.isFinite(v)) {
+            throw new InvalidInputException(field + " must be a valid number.");
+        }
         if (v <= 0) {
             throw new InvalidInputException(field + " must be greater than zero.");
         }

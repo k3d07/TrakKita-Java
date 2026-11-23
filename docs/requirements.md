@@ -11,23 +11,25 @@ The main users are jeepney, UV Express, bus, and tricycle drivers or operators w
 ## Functional requirements
 
 1. The system shall let a user add, update, filter, and delete daily fare and cost records.
-2. The system shall calculate net profit as total fares minus fuel cost and boundary fee, and identify negative results.
-3. The system shall let a user record fuel volume and price, calculate each fill-up cost, and summarize recent fuel entries.
-4. The system shall estimate route fuel cost and net income from route distance, traffic factor, trips per day, vehicle fuel use, fuel price, and boundary fee.
-5. The system shall rank available routes by estimated net income divided by estimated fuel cost.
-6. The system shall let a user add, edit, and remove route rows and save the route list in `data/routes.csv`.
-7. The system shall estimate break-even passengers and daily net profit from the entered operating assumptions.
-8. The system shall count regular and discounted fares in a Quick-Tap session, undo the most recent tap, and save completed sessions.
-9. The system shall offer to transfer a saved Quick-Tap total into a daily Profit / Loss entry.
-10. The system shall export the visible Profit / Loss records to CSV.
-11. The system shall show recent totals and route recommendations on the Dashboard.
-12. The system shall reload saved data when it starts and write changes when a record is changed.
+2. The system shall ask before replacing a daily earning with the same date, reject updates that would create a duplicate date, and keep only the first duplicate daily earning row when loading a file.
+3. The system shall calculate net profit as total fares minus fuel cost and boundary fee, and identify negative results.
+4. The system shall let a user record fuel volume and price, calculate each fill-up cost, and summarize recent fuel entries.
+5. The system shall estimate route fuel cost and net income from route distance, traffic factor, trips per day, vehicle fuel use, fuel price, and boundary fee.
+6. The system shall rank available routes by estimated net income divided by estimated fuel cost.
+7. The system shall let a user add, edit, and remove route rows and save the route list in `data/routes.csv`.
+8. The system shall estimate break-even passengers and daily net profit from the entered operating assumptions.
+9. The system shall count regular and discounted fares in a Quick-Tap session, undo the most recent tap, and save completed sessions.
+10. The system shall offer a single choice to save a Quick-Tap session and either transfer its fare total to Profit / Loss or save it without transfer.
+11. The system shall export the visible Profit / Loss records to CSV.
+12. The system shall show recent totals and route recommendations on the Dashboard.
+13. The system shall reload saved data when it starts and write changes when a record is changed.
 
 ## Non-functional requirements
 
 - The application shall work offline and use Java Swing and the JDK without third-party runtime dependencies.
 - The application shall store user records in readable CSV files beneath the project `data/` folder.
 - Invalid user input shall produce a clear message and shall not terminate the application.
+- Numeric validation shall reject `NaN` and positive or negative infinity.
 - A missing records file shall be treated as a first run. Malformed rows shall be skipped with a warning so valid rows can still load.
 - A missing or unusable route file shall fall back to the built-in route seeds.
 - Screens shall share a consistent visual theme and present monetary values with two decimal places.

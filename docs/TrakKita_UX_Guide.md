@@ -15,7 +15,9 @@ From `TrakKita-Java`, run `build.bat` and then `run.bat`. The scripts compile `s
 - Date stays left aligned; monetary columns and their headers are right aligned.
 - Save and export outcomes appear briefly in the screen's inline status line.
 - Empty tables explain that no records are available; update/delete actions become enabled only when a row is selected.
-- Adding a second record for the same date asks whether to replace the existing values.
+- Adding a second record for the same date asks whether to replace the existing values. Updating a record to a date used by another record is refused.
+- When loading saved records, the first daily earning for each date is kept and each later duplicate is skipped with a startup warning. Fuel and tap-session dates may repeat.
+- Non-finite fare and cost values are rejected during parsing or model validation.
 - Selecting a history row fills the entry form. Delete asks for confirmation.
 - Export CSV writes date and numeric PHP values using a period decimal separator.
 - When a date has fuel purchases recorded in Fuel Log, an empty fuel-cost field can be filled with that day's total.
@@ -31,6 +33,7 @@ From `TrakKita-Java`, run `build.bat` and then `run.bat`. The scripts compile `s
 ### Routes and route data
 
 - The eight default routes and their values are copied from the original C `route.c` seed table.
+- Route name columns have wider preferred widths so all built-in names fit in both route tables at the standard window size.
 - Ranking uses estimated net income divided by estimated fuel cost.
 - The fuel-use presets for Traditional Jeepney, Modern Jeepney, UV Express, and Tricycle use the C values: 0.22, 0.11, 0.08, and 0.03 liters/km. Java stores these as km/liter for the break-even screen.
 - Diesel starts at PHP 65/liter, matching `include/route.h`; the default boundary is PHP 500/day, matching `route.c`.
@@ -41,6 +44,7 @@ From `TrakKita-Java`, run `build.bat` and then `run.bat`. The scripts compile `s
 ### Break-Even
 
 - Vehicle selection fills fuel efficiency, boundary, and maintenance assumptions from the selected Java PUV class.
+- Numeric defaults are displayed with at most four decimals and no trailing zeros (for example, Traditional Jeepney fuel efficiency is `4.5455` km/L).
 - Its formulas are implemented by `BreakEvenCalculator` and operate on the values entered in the form.
 - The selected vehicle is shared with route recommendations. The app does not yet derive break-even inputs from a driver's past seven days of entries.
 
@@ -48,7 +52,8 @@ From `TrakKita-Java`, run `build.bat` and then `run.bat`. The scripts compile `s
 
 - Click the two fare buttons or use keyboard keys `1` and `2`.
 - Undo removes the most recent tap from the current session.
-- End and Save stores a session and offers to send its fare total to Profit / Loss.
+- End and Save opens one dialog with three choices: save and add to Profit / Loss, save only, or cancel.
+- At the minimum window size the tap buttons retain a 150 px height; the session history grows at the standard window size to show at least three rows.
 - Saved sessions appear in the history table and can be deleted after confirmation.
 
 ### Dashboard
@@ -60,6 +65,7 @@ From `TrakKita-Java`, run `build.bat` and then `run.bat`. The scripts compile `s
 
 - Earnings, fuel entries, and saved tap sessions are persisted in `data/puv_records.csv`.
 - Missing record files are treated as a first run. Damaged rows are skipped and reported at launch.
+- `NaN` and infinities are rejected by model and service validation. Duplicate daily earning rows are skipped after the first entry for that date.
 - Route definitions are stored separately in `data/routes.csv`.
 - User data folders are ignored by Git through `.gitignore`.
 
@@ -86,6 +92,9 @@ Code and documentation work in this checkout:
 - [x] Add duplicate-date replacement and Profit / Loss CSV export.
 - [x] Add Enter-to-submit, Escape-to-clear on entry forms, and inline save feedback.
 - [x] Add empty-table guidance and selection-based update/delete states.
+- [x] Widen route name columns and keep their labels visible at the standard window size.
+- [x] Reject non-finite numeric values and duplicate daily earning dates on update and load.
+- [x] Format Break-Even vehicle defaults and use one three-choice Quick-Tap end dialog.
 - [x] Add owner-driver boundary handling and synchronize the selected vehicle.
 - [x] Replace the README TODO with project-specific documentation.
 - [x] Add requirement analysis and PlantUML diagram.

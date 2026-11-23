@@ -22,6 +22,9 @@ public class DailyEarning extends LogEntry {
     public double getBoundaryFee() { return boundaryFee; }
 
     public void setTotalFares(double v) {
+        if (!Double.isFinite(v)) {
+            throw new InvalidFareException("Total fares must be a valid number.");
+        }
         if (v < 0) {
             throw new InvalidFareException("Total fares cannot be negative.");
         }

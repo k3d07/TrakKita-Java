@@ -1,5 +1,7 @@
 package trakkita.service;
 
+import trakkita.exception.InvalidInputException;
+
 public class BreakEvenResult {
     private final double fuelCost;
     private final double totalCost;
@@ -12,6 +14,10 @@ public class BreakEvenResult {
 
     public BreakEvenResult(double fuelCost, double totalCost, int totalPassengers, double grossRevenue,
                            double netProfit, int breakEvenPax, int breakEvenPerTrip, double coveragePct) {
+        if (!Double.isFinite(fuelCost) || !Double.isFinite(totalCost) || !Double.isFinite(grossRevenue)
+                || !Double.isFinite(netProfit) || !Double.isFinite(coveragePct)) {
+            throw new InvalidInputException("Break-even result exceeds the supported numeric range.");
+        }
         this.fuelCost = fuelCost;
         this.totalCost = totalCost;
         this.totalPassengers = totalPassengers;

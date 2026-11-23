@@ -2,6 +2,10 @@
 skinparam classAttributeIconSize 0
 skinparam shadowing false
 
+package trakkita {
+  class Main
+}
+
 package trakkita.model {
   interface Persistable
   interface Reportable
@@ -59,6 +63,36 @@ package trakkita.gui {
   class StatusLine
 }
 
+package trakkita.util {
+  class Validator <<utility>>
+  class Money <<utility>>
+}
+
+package trakkita.gui.widget {
+  class Anim
+  class BackdropPanel
+  class Banner
+  class BarChart
+  class BigTapButton
+  class CardPanel
+  class CountUp
+  class CountUpLabel
+  class CoverageGauge
+  class JeepneyIcon
+  class JeepneyPainter <<utility>>
+  class LeaderRow
+  class LedDisplay
+  class NavButton
+  class RoadStrip
+  class SignBoard
+  class StripeBand
+  class StyledTable
+  class Theme <<utility>>
+  class ThemedButton
+  class ThemedField
+  class TitleLabel
+}
+
 LogEntry <|-- DailyEarning
 LogEntry <|-- FuelEntry
 LogEntry <|-- TapSession
@@ -71,9 +105,9 @@ PUV <|-- ProvincialBus
 PUV <|-- Tricycle
 CsvDataStore ..|> DataStore
 
-AppContext *-- EntryRepository : earnings
-AppContext *-- EntryRepository : fuel
-AppContext *-- EntryRepository : sessions
+AppContext *-- EntryRepository : earnings : EntryRepository<DailyEarning>
+AppContext *-- EntryRepository : fuel : EntryRepository<FuelEntry>
+AppContext *-- EntryRepository : sessions : EntryRepository<TapSession>
 AppContext *-- FuelLogService
 AppContext *-- RouteRecommender
 AppContext *-- BreakEvenCalculator
@@ -100,6 +134,28 @@ MainFrame *-- AppShell
 AppShell o-- ScreenPanel
 ScreenPanel --> AppContext
 ScreenPanel *-- StatusLine
+InvalidFareException --|> InvalidInputException
+Main ..> AppContext
+Main ..> MainFrame
+DailyEarning ..> Validator
+FuelEntry ..> Validator
+Route ..> Validator
+BreakEvenInput ..> Validator
+DailyEarning ..> Money
+FuelEntry ..> Money
+RouteResult ..> Money
+AppContext ..> Money
+AppShell o-- NavButton
+AppShell o-- BackdropPanel
+AppShell o-- SignBoard
+AppShell o-- StripeBand
+ProfitPanel ..> UI
+FuelPanel ..> UI
+RoutePanel ..> UI
+RouteManagerPanel ..> UI
+QuickTapPanel ..> UI
+DashboardPanel ..> UI
+BreakEvenPanel ..> UI
 ProfitPanel ..> TableStyle
 FuelPanel ..> TableStyle
 RoutePanel ..> TableStyle
